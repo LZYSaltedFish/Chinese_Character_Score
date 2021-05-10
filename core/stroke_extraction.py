@@ -22,13 +22,6 @@ def cal_center(img):
     row_sum = 0
     col_sum = 0
 
-    # time_start = time.time()
-
-    # for row in range(height):
-    #     for col in range(width):
-    #         if img[row][col]==255:
-    #             row_sum += row
-    #             col_sum += col
     total = np.sum(img[:, :]) / 255
     for row in range(height):
         row_sum += np.sum(img[row, :]) * row
@@ -37,8 +30,6 @@ def cal_center(img):
         col_sum += np.sum(img[:, col]) * col
     col_sum /= 255
 
-    # time_end = time.time()
-    # print('总共用时：', time_end - time_start, "秒")
     return np.array([row_sum/total, col_sum/total])
 
 def change_point_filter(change_point, max_thresh):
@@ -56,22 +47,6 @@ def change_point_filter(change_point, max_thresh):
             left_index.append(cp)
             prev = cp
 
-    # for first in range(len(change_point) -2):
-    #     if first in pop_index:
-    #         continue
-    #     offset = 1
-    #     for second in range(first+2, len(change_point)):
-    #         if (change_point[second] - change_point[first]) < max_thresh:
-    #             # print("(", change_point[first], ",", change_point[second], ")", 
-    #             # change_point[second]-change_point[first], "delete", change_point[first+offset])
-    #             pop_index.append(first + offset)
-    #             offset += 1
-    #         else:
-    #             # print("(", change_point[first], ",", change_point[second], ")", 
-    #             # change_point[second]-change_point[first], "hold")
-    #             break
-    # for i in reversed(pop_index):
-    #     change_point.pop(i)
     return left_index
 
 def resize_img(img, rotate, new_w):
@@ -185,18 +160,6 @@ def get_strokes(video_path, frames_num, frames_interval,
                 # ------------    二、 获取笔迹增长点    -------------------
                 pre_frames.append(edge)
                 if len(pre_frames) >= frames_num:
-                    # 先相减，再取交集(原方法)
-                    # last_diff = np.zeros((1,))
-                    # for i in range(1, frames_num):
-                    #     diff = cv2.subtract(pre_frames[i], pre_frames[0])
-                    #     if i==1:
-                    #         last_diff = diff
-                    #     else:
-                    #         last_diff = cv2.bitwise_and(last_diff, diff)
-
-                    # stroke_growth = cv2.bitwise_not(last_diff)
-                    # stroke_growth_m2 = last_diff
-                    # stroke_growth_m1 = cv2.morphologyEx(stroke_growth_m1, cv2.MORPH_OPEN, kernel, iterations=1)
 
                     # 先两两相与，再两两相减，最后取并集（改进强化法）
                     and_list = []
@@ -248,7 +211,6 @@ def get_strokes(video_path, frames_num, frames_interval,
 
     # 【可选】 显示所有被认为是“切换点”的帧图像
     if show_change_frame:
-        # cap = cv2.VideoCapture(video_path)
         font = cv2.FONT_HERSHEY_SIMPLEX # 默认字体
         for i in change_point:
             cap.set(cv2.CAP_PROP_POS_FRAMES, i)
