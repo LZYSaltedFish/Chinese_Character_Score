@@ -68,12 +68,13 @@ def resize_img(img, rotate, new_w):
     
     return img
 
-def show_strokes(strokes_list, stroke_num):
+def show_strokes(strokes_list, stroke_num, save_path=""):
     '''
     拼接并显示笔画图像
     ----------
     :param strokes_list [list]: 笔画图像列表
     :param stroke_num [int]: 该字包含的笔画数
+    :param save_path [str]: 图片保存路径
     '''
     # 选择合适的拼接行数
     rows_num = int(stroke_num**0.5) if (int(stroke_num**0.5) > 0) else 1
@@ -94,7 +95,8 @@ def show_strokes(strokes_list, stroke_num):
             joint = np.vstack((joint, row_joint))
 
     # 图像显示与保存
-    cv2.imwrite("./test_video/result/" + VIDEO_NAME + "_strokes2.jpg", joint)
+    if save_path != "":
+        cv2.imwrite(save_path, joint)
     cv2.namedWindow("strokes", 0)
     cv2.resizeWindow("strokes", int(joint.shape[1]/rows_num), int(joint.shape[0]/rows_num))
     cv2.imshow("strokes", joint)
@@ -102,6 +104,12 @@ def show_strokes(strokes_list, stroke_num):
     cv2.destroyAllWindows()
 
 def reserve_max_cnt(img):
+    '''
+    保留最大连通域
+    ----------
+    :param img [ndarray]: 二值图像，笔画为白色
+    :retrun [ndarray]: 二值图像，最大连通域为白色
+    '''
     contours, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     cnt = contours[np.argmax([cv2.contourArea(cnt) for cnt in contours])]
 
@@ -123,6 +131,7 @@ def get_strokes(video_path, frames_num, frames_interval,
     :param show_diff [bool]: 是否显示笔迹增长视频
     :param show_change_frame [bool]: 是否显示切换点帧图像
     :param save_video [bool]: 是否保存视频
+    :return [list]: 单笔画图像列表
     '''
     cap = cv2.VideoCapture(video_path)
     out = cv2.VideoWriter()
@@ -258,13 +267,15 @@ def get_strokes(video_path, frames_num, frames_interval,
                 last_frame = edge
         
         # 图像拼接并显示
+        result_path = "./test_video/result/" + VIDEO_NAME + "_strokes.jpg"
         show_strokes(strokes_list, stroke_num)
 
-    # out.release()
     cap.release()
     cv2.destroyAllWindows() # 关闭所有窗口
-    print(len(change_point))
+    print("切换点个数为：", len(change_point))
     print(change_point)
+
+    return strokes_list
 
 if __name__ == "__main__":
     path = "./test_video/" + VIDEO_NAME + ".mp4"
@@ -274,6 +285,3 @@ if __name__ == "__main__":
 
     time_end = time.time()
     print('总共用时：', time_end - time_start, "秒")
-
-# TODO MSER+NMS 定位切割
-# TODO 与模板笔画重心对比
