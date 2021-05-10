@@ -6,38 +6,10 @@ from matplotlib import pyplot as plt
 import core
 
 NEW_IMG_WIDTH = 1280
-VIDEO_NAME = 'fixed6'
+VIDEO_NAME = 'fixed5'
 CENTER_THRESH = 10
 FILTER_THRESH = 25
-STROKE_NUM = 4
-
-def corners_detect(img):
-    '''
-    Harris角点检测
-    ----------
-    :param img [ndarray]: 原图像
-    :returns: [list] 角点坐标元组
-    '''
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    corners = cv2.cornerHarris(img_gray, 50, 9, 0.05)
-    cor_list = []
-    h, w = corners.shape
-    max_val = 0.1*corners.max()
-
-    # time_start = time.time()
-    # cor_list = [(col, row) for row in range(h) for col in range(w) if corners[row, col] > max_val]
-    corners = [corners > max_val]
-    # print(corners)
-    cor_list = [(col, row) for row in range(h) for col in range(w) if corners[0][row, col]]
-    # time_end = time.time()
-    # print('坐标筛选用时：', time_end - time_start, '秒')
-
-    cor_list.sort(key=lambda elem: elem[0])
-    for i in range(len(cor_list)-1, 0, -1):
-        if cor_list[i][0] - cor_list[i-1][0] < 10:
-            cor_list.pop(i)
-
-    return cor_list
+STROKE_NUM = 6
 
 def cal_center(img):
     '''
@@ -147,7 +119,7 @@ def show_strokes(strokes_list, stroke_num):
             joint = np.vstack((joint, row_joint))
 
     # 图像显示与保存
-    cv2.imwrite("./test_video/result/" + VIDEO_NAME + "_strokes.jpg", joint)
+    cv2.imwrite("./test_video/result/" + VIDEO_NAME + "_strokes2.jpg", joint)
     cv2.namedWindow("strokes", 0)
     cv2.resizeWindow("strokes", int(joint.shape[1]/rows_num), int(joint.shape[0]/rows_num))
     cv2.imshow("strokes", joint)
@@ -317,7 +289,7 @@ def get_strokes(video_path, frames_num, frames_interval,
                 # 相邻起始帧与结束帧相减，得到各笔画
                 if i!=0:
                     result = cv2.subtract(edge, last_frame)
-                    result = cv2.morphologyEx(result, cv2.MORPH_OPEN, kernel, iterations=1)
+                    result = cv2.morphologyEx(result, cv2.MORPH_CLOSE, kernel, iterations=3)    # 笔画交叉会导致笔段断开，因此执行闭运算连接断笔
                     result = reserve_max_cnt(result)    # 保留最大连通域
                     result = cv2.morphologyEx(result, cv2.MORPH_CLOSE, kernel, iterations=3)
                     strokes_list.append(result)
@@ -336,7 +308,7 @@ if __name__ == "__main__":
     path = "./test_video/" + VIDEO_NAME + ".mp4"
     time_start = time.time()
     
-    get_strokes(path, 3, 3, STROKE_NUM, True, True, True)
+    get_strokes(path, 4, 5, STROKE_NUM, False, False, False)
 
     time_end = time.time()
     print('总共用时：', time_end - time_start, "秒")
