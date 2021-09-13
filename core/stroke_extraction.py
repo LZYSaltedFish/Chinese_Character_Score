@@ -1,4 +1,5 @@
 import cv2
+import sys
 import numpy as np
 import time
 import math
@@ -48,6 +49,18 @@ def change_point_filter(change_point, max_thresh):
             prev = cp
 
     return left_index
+
+def change_point_aligh(change_point, stroke_num):
+    if len(change_point) == (stroke_num + 1):
+        return change_point
+    delete_num = len(change_point)-(stroke_num+1)
+    span = len(change_point)/delete_num
+    pos = len(change_point)-1
+    while(delete_num>0 and pos>=0):
+        pos -= span
+        change_point.pop(int(pos))
+        delete_num -= 1
+    return change_point
 
 def resize_img(img, rotate, new_w):
     '''
@@ -217,6 +230,7 @@ def get_strokes(video_path, frames_num, frames_interval,
     change_point = change_point_filter(change_point, FILTER_THRESH)
     if len(change_point) % STROKE_NUM == 0:
         change_point.append(change_point[-1])
+    change_point = change_point_aligh(change_point, stroke_num)
 
     # 【可选】 显示所有被认为是“切换点”的帧图像
     if show_change_frame:
@@ -236,12 +250,13 @@ def get_strokes(video_path, frames_num, frames_interval,
 
 
     # ------------    四、 获取各段笔画    -------------------
+    strokes_list = []
     if len(change_point) < stroke_num+1:
         print("【ERROR】无法正常检测到笔画，请在不同笔画之间稍稍停顿")
+        sys.exit(0)
     else:
         print(change_point)
         stroke_perpoint = int(len(change_point) / stroke_num)
-        strokes_list = []
         last_frame = np.zeros((1,))
         for i in range(0,len(change_point), stroke_perpoint):
             cap.set(cv2.CAP_PROP_POS_FRAMES, change_point[i])

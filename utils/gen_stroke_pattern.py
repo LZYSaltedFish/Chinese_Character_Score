@@ -41,6 +41,27 @@ def stroke_extract(img_path):
         strokes.append(stroke)
     return strokes
 
+def character_extract(img_path):    # 提取出整个汉字二值图
+    src_img = []
+    for f in os.listdir(img_path):
+        file_path = os.path.join(img_path, f)
+        if not os.path.isdir(file_path):
+            # print(file_path)
+            img = cv2.imread(file_path)
+            if not img is None:
+                src_img.append(img)
+            else:
+                print("未能读取图片")
+    if len(src_img):
+        result_img = src_img[-1]
+        result_img = cv2.cvtColor(result_img, cv2.COLOR_BGR2GRAY)
+        result_img = cv2.bitwise_not(result_img)
+        _, result_img = cv2.threshold(result_img, 100, 255, cv2.THRESH_BINARY)
+        return result_img
+    else:
+        print("文件夹为空")
+        return None
+
 def gravity_core(img):
     '''
     计算笔迹的重心特征
@@ -89,22 +110,50 @@ def grid_vector(img, n_divide = 3):
     return grid_vector
 
 if __name__ == '__main__':
-    with open('./utils/pattern_feature_dict', 'wb+') as f:
-        patt_feat = {}
+    # with open('./utils/stroke_feature_dict', 'wb+') as f:
+    #     patt_feat = {}
 
-        for dir in os.listdir(img_path):    # 遍历目录下的每一个模板字
-            print("正在处理", dir, "...")
-            file_path = os.path.join(img_path, dir)
-            if os.path.isdir(file_path):
-                stroke_img = stroke_extract(file_path)  # 提取出单笔画二值图
+    #     for dir in os.listdir(img_path):    # 遍历目录下的每一个模板字
+    #         print("正在处理", dir, "...")
+    #         file_path = os.path.join(img_path, dir)
+    #         if os.path.isdir(file_path):
+    #             stroke_img = stroke_extract(file_path)  # 提取出单笔画二值图
 
-                feat_list = []  # 对每个笔画计算两类特征
-                for img in stroke_img:
-                    gvt_rate, gvt_pos = gravity_core(img)
-                    grid = grid_vector(img)
-                    feat_list.append([gvt_rate, grid])
+    #             feat_list = []  # 对每个笔画计算两类特征
+    #             for img in stroke_img:
+    #                 gvt_rate, gvt_pos = gravity_core(img)
+    #                 grid = grid_vector(img)
+    #                 feat_list.append([gvt_rate, grid])
                 
-                patt_feat.update({dir : feat_list})
+    #             patt_feat.update({dir : feat_list})
         
-        pickle.dump(patt_feat, f)   # 模板笔画特征持久化
-        print("所有模板特征处理完成！")
+    #     pickle.dump(patt_feat, f)   # 模板笔画特征持久化
+    #     print("所有模板特征处理完成！")
+
+
+    # with open('./utils/character_feature_dict', 'wb+') as f:
+    #     patt_feat = {}
+
+    #     for dir in os.listdir(img_path):
+    #         print("正在处理", dir, "...")
+    #         file_path = os.path.join(img_path, dir)
+    #         if os.path.isdir(file_path):
+    #             char_img = character_extract(file_path)
+
+    #             feat_list = []
+    #             if not char_img is None:
+    #                 gvt_rate, _ = gravity_core(char_img)
+    #                 grid = grid_vector(char_img)
+    #                 feat_list = [gvt_rate, grid]
+    #             else:
+    #                 feat_list = []
+
+    #             patt_feat.update({dir : feat_list})
+
+    #     pickle.dump(patt_feat, f)
+    #     print("所有模板整字特征处理完毕！")
+
+    with open('./utils/character_feature_dict', 'rb') as f:
+        dict = pickle.load(f)
+        print(dict['0032'][0])
+        print(dict['0032'][1])
